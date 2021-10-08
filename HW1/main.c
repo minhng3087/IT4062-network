@@ -21,6 +21,8 @@ void init(list *acc){
     acc->head = acc->tail = NULL;
 }
 
+int m = 0; // chua signin
+
 account *makeNode(account temp) {
     account *p = (account *)malloc(sizeof(account));
     strcpy(p->username, temp.username);
@@ -56,7 +58,7 @@ void readFile(list* acc){
 
 void writeFileRegister(char* username, char* password) {
     FILE* fin = fopen("account.txt", "a");
-    fprintf(fin,"%s %s 2",username, password);
+    fprintf(fin,"\n%s %s 2",username, password);
     fclose(fin);
 }
 
@@ -148,9 +150,9 @@ void setNewPassword(list* acc,char* username, char* password){ // chuc nang 5
 	writeFile(temp, username);
 }
 
-void checkSignin(list* acc, char* username){ // chuc nang 4
+void checkBlock(list* acc, char* username){ // chuc nang 4
     for(account *temp = acc->head; temp; temp = temp->next){
-        if(strcmp(temp->username, username) == 0 && temp->signin == 1) {
+        if(strcmp(temp->username, username) == 0) {
             switch(temp->status) {
                 case 0: 
                     printf("Account is blocked\n");
@@ -165,7 +167,6 @@ void checkSignin(list* acc, char* username){ // chuc nang 4
             return;
         }
     }
-    printf("Account is not sign in");
 }
 
 void signOut(list* acc, char* username){ 
@@ -258,6 +259,7 @@ void chucnang3(list* acc) {
             if(checkAccount(acc, password, username)) {
                 printf("Hello hust");
                 setSignIn(acc, username);
+                m = 1;
                 break;
             }else {
                 printf("Password is incorrect\n");
@@ -277,7 +279,7 @@ void chucnang4(list* acc) {
     printf("Username : ");
     scanf("%s", username);
     if(searchUsername(acc, username)) {
-        checkSignin(acc, username);
+        checkBlock(acc, username);
     }else {
         printf("Cannot find account");
     }
@@ -344,7 +346,11 @@ int main() {
                 break;
             }
             case 4: {
-                chucnang4(acc);
+                if(m == 0) {
+                    printf("Please sigin\n");
+                }else {
+                    chucnang4(acc);
+                }
                 break;
             }
             case 5: {
