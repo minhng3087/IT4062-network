@@ -1,6 +1,7 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
+#include<ctype.h>
 #define MAX 30
 #define N 256
 
@@ -22,6 +23,13 @@ void init(list *acc){
 }
 
 int m = 0; // chua signin
+
+int checkSpace(char *str) {
+    for(int i = 0; i < strlen(str); i++){
+        if(str[i] == ' ') return 1;
+    }
+    return 0;
+}
 
 account *makeNode(account temp) {
     account *p = (account *)malloc(sizeof(account));
@@ -182,13 +190,21 @@ void signOut(list* acc, char* username){
 
 void chucnang1(list* acc) {
     char username[MAX], password[MAX];
-    printf("Username : ");
-    scanf("%s", username);
+    char temp;
+    do {
+       printf("Username : ");
+        scanf("%c",&temp); // temp statement to clear buffer
+        scanf("%[^\n]",username);
+    }while(checkSpace(username));
+    
     if(searchUsername(acc, username)) {
         printf("Account existed");
     }else{
-        printf("Password : ");
-        scanf("%s", password);
+        do {
+            printf("Password : ");
+            scanf("%c",&temp); // temp statement to clear buffer
+            scanf("%[^\n]", password);
+        }while(checkSpace(password));
         account p;
         strcpy(p.password, password);
         strcpy(p.username, username);
@@ -203,14 +219,21 @@ void chucnang2(list* acc) {
     char username[MAX], password[MAX];
     int count = 0;
     char code[MAX];
-    printf("Username : ");
-    scanf("%s", username);
+    char temp;
+    do {
+       printf("Username : ");
+        scanf("%c",&temp); // temp statement to clear buffer
+        scanf("%[^\n]",username);
+    }while(checkSpace(username));
     if(!searchUsername(acc, username)) {
         printf("Cannot find account");
     }else {
         do {
-            printf("Password : ");
-		    scanf("%s", password);
+            do {
+                printf("Password : ");
+                scanf("%c",&temp); // temp statement to clear buffer
+                scanf("%[^\n]", password);
+            }while(checkSpace(password));
             if(checkAccount(acc, password, username)) {
                 do {
                     printf("Code : ");
@@ -244,8 +267,12 @@ void chucnang2(list* acc) {
 void chucnang3(list* acc) {
     char username[MAX], password[MAX];
     int count = 0;
-    printf("Username : ");
-    scanf("%s", username);
+    char temp;
+    do {
+       printf("Username : ");
+        scanf("%c",&temp); // temp statement to clear buffer
+        scanf("%[^\n]",username);
+    }while(checkSpace(username));
     if(!searchUsername(acc, username)) {
         printf("Cannot find account");
     }else {
@@ -254,8 +281,11 @@ void chucnang3(list* acc) {
             return;
         }
         do {
-            printf("Password : ");
-		    scanf("%s", password);
+            do {
+                printf("Password : ");
+                scanf("%c",&temp); // temp statement to clear buffer
+                scanf("%[^\n]", password);
+            }while(checkSpace(password));
             if(checkAccount(acc, password, username)) {
                 printf("Hello hust");
                 setSignIn(acc, username);
@@ -276,8 +306,12 @@ void chucnang3(list* acc) {
 void chucnang4(list* acc) {
     char username[MAX], password[MAX];
     int count = 0;
-    printf("Username : ");
-    scanf("%s", username);
+    char temp;
+    do {
+        printf("Username : ");
+        scanf("%c",&temp); // temp statement to clear buffer
+        scanf("%[^\n]",username);
+    }while(checkSpace(username));
     if(searchUsername(acc, username)) {
         checkBlock(acc, username);
     }else {
@@ -287,15 +321,25 @@ void chucnang4(list* acc) {
 
 void chucnang5(list* acc) {
     char username[MAX], password[MAX], newPassword[MAX];
-    printf("Username : ");
-    scanf("%s", username);
+    char temp;
+    do {
+        printf("Username : ");
+        scanf("%c",&temp); // temp statement to clear buffer
+        scanf("%[^\n]",username);
+    }while(checkSpace(username));
     if(!searchUsername(acc, username)) {
         printf("Cannot find account");
     }else {
-        printf("Password : ");
-	    scanf("%s", password);
-        printf("NewPassword : ");
-        scanf("%s", newPassword);
+        do {
+            printf("Password : ");
+            scanf("%c",&temp); // temp statement to clear buffer
+            scanf("%[^\n]", password);
+        }while(checkSpace(password));
+         do {
+            printf("NewPassword : ");
+            scanf("%c",&temp); // temp statement to clear buffer
+            scanf("%[^\n]", newPassword);
+        }while(checkSpace(password));
         if(checkAccount(acc, password, username)) {
             setNewPassword(acc, username, newPassword);
             printf("Password is changed\n");
@@ -307,8 +351,12 @@ void chucnang5(list* acc) {
 
 void chucnang6(list* acc) {
     char username[MAX], password[MAX];
-    printf("Username : ");
-    scanf("%s", username);
+    char temp;
+    do {
+        printf("Username : ");
+        scanf("%c",&temp); // temp statement to clear buffer
+        scanf("%[^\n]",username);
+    }while(checkSpace(username));
     if(searchUsername(acc, username)) {
         signOut(acc, username);
     }else {
