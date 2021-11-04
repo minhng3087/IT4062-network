@@ -3,6 +3,7 @@
 #include<string.h>
 #include<ctype.h>
 #include "network.h"
+#include "lib.h"
 #define MAX 30
 #define N 256
 
@@ -11,6 +12,7 @@ typedef struct _account {
     char password[MAX];
     int status;
     int signin;
+    char homepage[MAX];
     struct _account *next;
 }account;
 
@@ -27,6 +29,7 @@ account *makeNode(account temp) {
     account *p = (account *)malloc(sizeof(account));
     strcpy(p->username, temp.username);
     strcpy(p->password, temp.password);
+    strcpy(p->homepage, temp.homepage);
     p->status = temp.status;
     p->signin = 0; // 0: chua signin, 1:signin
     p->next = NULL;
@@ -59,15 +62,15 @@ void readFile(){
     FILE *fin = fopen("account.txt","r");
     char line[N];
     while(fgets(line, N, fin) != NULL){
-        sscanf(line, "%s %s %d", temp.username, temp.password, &temp.status);
+        sscanf(line, "%s %s %d %s", temp.username, temp.password, &temp.status, temp.homepage);
         add(&head,makeNode(temp));
     }
     fclose(fin);
 }
 
-void writeFileRegister(char* username, char* password) {
+void writeFileRegister(char* username, char* password, char* homepage) {
     FILE* fin = fopen("account.txt", "a");
-    fprintf(fin,"\n%s %s 2",username, password);
+    fprintf(fin,"\n%s %s 2 %s",username, password, homepage);
     fclose(fin);
 }
 
@@ -121,7 +124,7 @@ void setStatus(int status, char* username){
 void writeFile(account* p, char* username) {
 	FILE *fin = fopen("account.txt","w+");
 	while(p!=NULL){
-		fprintf(fin,"%s %s %d\n",p->username, p->password, p->status);
+		fprintf(fin,"%s %s %d %s\n",p->username, p->password, p->status, p->homepage);
 		p = p->next;
 	}
 	fclose(fin);
@@ -184,7 +187,7 @@ void signOut(char* username){
 }
 
 void chucnang1() {
-    char username[MAX], password[MAX];
+    char username[MAX], password[MAX], homepage[MAX];
     char temp;
     do {
        printf("Username : ");
@@ -200,12 +203,21 @@ void chucnang1() {
             scanf("%c",&temp); // temp statement to clear buffer
             scanf("%[^\n]", password);
         }while(checkSpace(password));
+        do {
+            printf("Homepage : ");
+            scanf("%c",&temp); // temp statement to clear buffer
+            scanf("%[^\n]", homepage);
+        }while(checkSpace(homepage));
+         if (isValidIp(homepage) == 0 || isHostName(homepage) == 0) {
+            printf("Invalid Homepage\n");
+        }
         account p;
         strcpy(p.password, password);
         strcpy(p.username, username);
+        strcpy(p.homepage, homepage);
         p.status = 2;
         add(&head, makeNode(p));
-        writeFileRegister(username, password);
+        writeFileRegister(username, password, homepage);
         printf("Successful registration\n");
     }
 }
@@ -386,6 +398,8 @@ int main() {
 		printf("Your choice (1-6), other to quit: \n");
         int choice = 0;
 		scanf("%d",&choice);
+        char username[MAX];
+        char temp;
         switch(choice) {
             case 1: 
 				chucnang1();
@@ -410,24 +424,20 @@ int main() {
                 chucnang6();
                 break;
             case 7:
-                char username[MAX];
-                char temp;
                 do {
                     printf("Username : ");
                     scanf("%c",&temp);
                     scanf("%[^\n]",username);
                 }while(checkSpace(username));
-                if(searchUsername(acc, username)) {
-                    account *tmp = getAccount(acc, username);
+                if(searchUsername(username)) {
+                    account *tmp = getAccount(username);
                     if(tmp->status == 2) {
                         printf("Account is not activated.\n");
-                        return;
-                    } else if (tmp->status == 1) {
+                    } else if (tmp->status == 0) {
                         printf("Account is blocked.\n");
-                        return;
                     }
                     if(tmp->signin == 1) {
-                        showDomain(username);
+                        showDomain(tmp->homepage);
                     }else {
                         printf("Account is not sign in\n");
                     }
@@ -436,25 +446,25 @@ int main() {
                 }
                 break;
             case 8:
-                char username[MAX];
-                char temp;
                 do {
                     printf("Username : ");
                     scanf("%c",&temp);
                     scanf("%[^\n]",username);
                 }while(checkSpace(username));
-                if(searchUsername(acc, username)) {
-                    account *tmp = getAccount(acc, username);
+                if(searchUsername(username)) {
+                    account *tmp = getAccount(username);
                     if(tmp->status == 2) {
                         printf("Account is not activated.\n");
-                        return;
-                    } else if (tmp->status == 1) {
+                    } else if (tmp->status == 0) {
                         printf("Account is blocked.\n");
-                        return;
                     }
                     if(tmp->signin == 1) {
-                        
+                        showIp(tmp->homepage);
+                    }else {
+                        printf("Account is not sign in\n");
                     }
+                }else {
+                    printf("Cannot find account\n");
                 }
                 break;
             default: return 0;

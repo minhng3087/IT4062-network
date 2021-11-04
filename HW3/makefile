@@ -5,7 +5,7 @@ LIBS =  -lm
 all: resolver
 
 resolver: main.o lib.o network.o
-	${CC} main.o lib.o -o resolver
+	${CC} main.o lib.o network.o -o resolver
 
 main.o: main.c
 	${CC} ${CFLAGS} main.c
