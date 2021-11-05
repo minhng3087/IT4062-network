@@ -66,6 +66,15 @@ void printList() {
     }
 }
 
+int checkString(char *str){
+    while (*str) {
+        if(!isalnum(*str) || *str == ' ') return 0;
+        str++;
+    }
+    return 1;
+}
+
+
 void readFile(){
     account temp;
     FILE *fin = fopen("account.txt","r");
@@ -177,7 +186,8 @@ void setNewPassword(char* username, char* password){ // chuc nang 5
 void signOut(char* username, char* result){
     for(account *temp = head; temp; temp = temp->next){
         if(strcmp(temp->username, username) == 0 && temp->signin == 1) {
-            strcpy(result, "Goodbye hust");
+            strcpy(result, "Goodbye ");
+            strcat(result, username);
             temp->signin = 0;
             return;
         }
@@ -185,29 +195,15 @@ void signOut(char* username, char* result){
     strcpy(result, "Account is not sign in");
 }
 
-void die(char *s)
-{
-	perror(s);
-	exit(1);
-}
-
-int checkString(char *str){
-    while (*str) {
-        if(!isalnum(*str) || *str == ' ') return 0;
-        str++;
-    }
-    return 1;
-}
-
 void encodePass(char str[MAX], char *result) {
     char number[MAX], alpha[MAX];
     int x = 0, y = 0;
     for(int i = 0; i < strlen(str); i++) {
-        if(isdigit(str[i])) {
-            number[x++] = str[i];
-        } else if (isalpha(str[i])){
+        if(isalpha(str[i])){
             alpha[y++] = str[i];
-        }
+        }else if(isdigit(str[i])) {
+            number[x++] = str[i];
+        } 
     }
     number[x] = '\0';
     alpha[y] = '\0';
@@ -226,69 +222,52 @@ void encodePass(char str[MAX], char *result) {
 
 
 int main(int argc, char **argv) {
-    int sockfd = 0, step = 1, count = 0;
-    struct sockaddr_in server_addr, client_addr;
-    char input[BUFFER];
+    int sockfd, flag = 1, count = 0;
     char request[BUFFER], response[BUFFER];
-    socklen_t addr_size = sizeof(server_addr);
     char username[MAX], password[MAX], newpass[MAX];
-    
+    struct sockaddr_in servaddr, cliaddr;
+    socklen_t len = sizeof(cliaddr);
     if (argc != 2) {
-        printf("Usage: %s <port>\n", argv[0]);
-        return -1;
+        printf("Input: %s <port>\n", argv[0]);
+        return 0;
     }
     readFile();
-    // printList();
 
-    int port = atoi(argv[1]);
-    
-    // Create UDP socket
-    if ((sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0){
-        die("Error socket");
+    int PORT = atoi(argv[1]);
+
+    if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0){
+        perror("socket creation failed");
+        exit(EXIT_FAILURE);
     };
-    
-    // Set server address, port
-    memset(&server_addr, '\0', sizeof(server_addr));
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(port);
-    server_addr.sin_addr.s_addr = inet_addr(LOCALHOST);
-
-    // Bind socket to port
-    if (bind(sockfd, (struct sockaddr*)&server_addr, sizeof(server_addr))){
-        die("bind");
+    memset(&servaddr, 0, sizeof(servaddr));
+    memset(&cliaddr, 0, sizeof(cliaddr));
+      
+    servaddr.sin_family    = AF_INET; // IPv4
+    servaddr.sin_addr.s_addr = inet_addr(LOCALHOST);
+    servaddr.sin_port = htons(PORT);
+    if (bind(sockfd, (struct sockaddr*)&servaddr, sizeof(servaddr)) < 0){
+        perror("bind failed");
+        exit(EXIT_FAILURE);
     }
-    printf("Server started.\n");
-
-    // Keep listening for data
+    printf("Server started on %s:%d\n", LOCALHOST, PORT);
     while(1) {
-        printf("Waiting for data...\n");
-		fflush(stdout);
-        
-        // Try to receive data
-        if (recvfrom(sockfd, input, BUFFER, 0, (struct sockaddr *) &client_addr, &addr_size) < 0) {
-            die("recvfrom()");
-        }
-
-        strtok(input, "\n");
-        strcpy(request, input);
+        int n = recvfrom(sockfd, request, BUFFER, MSG_WAITALL, (struct sockaddr *) &cliaddr, &len);
+        request[n] = '\0';
 
         if(strcmp(request, "bye") == 0) {
-            step = 4;
-            signOut(username, response);
-            strcpy(username, "");
-            strcpy(password, "");
-            step = 1;
+           flag = 4;
         }
         printf("Data received: %s\n" , request);
 
-        switch(step) {
+        switch(flag) {
             case 1:
                 strcpy(username, request);
                 if(searchUsername(username) == 1) {
                     strcpy(response, "Insert password");
-                    step++;
+                    flag++;
                 }else {
-                    strcpy(response, "Cannot find account");
+                    strcpy(response, "Cannot find account\n");
+                    strcat(response, "Input username again: ");
                 }
                 break;
             case 2:
@@ -296,39 +275,47 @@ int main(int argc, char **argv) {
                 account* temp = checkAccount(password, username);
                 if(temp != NULL) {
                     if(temp->status == 1) {
-                        strcpy(response, "OK");
+                        strcpy(response, "OK\n");
+                        strcat(response, "Input new password: ");
                         setSignIn(username);
                         count = 0;
-                        step++;
+                        flag++;
                     }else if(temp->status == 0 || temp->status == 2) {
-                        strcpy(response, "Account not ready");
-                        step = 1;
+                        strcpy(response, "Account not ready\n");
+                        strcat(response, "Input username again: ");
+                        flag = 1;
                     }
                 }else {
                     strcpy(response, "Not OK");
                     count++;
                 }
                 if(count == 3) {
-                    strcpy(response, "Account is blocked");
+                    strcpy(response, "Account is blocked\n");
+                    strcat(response, "Input username again: ");
                     blockAccount(username);
-                    step = 1;
+                    flag = 1;
                 }
                 break;
              case 3:    
                 strcpy(newpass, request);
                 if(checkString(newpass) == 0) {
-                    strcpy(response, "Error");
+                    strcpy(response, "Error\n");
+                    strcat(response, "Input newpass again: ");
                 }else {
                     setNewPassword(username, newpass);
                     encodePass(newpass, response);
                 }
                 break;
-            
+            case 4: 
+                signOut(username, response);
+                strcat(response, "\n");
+                strcat(response, "Input username: ");
+                memset(username, 0, sizeof(username));
+                memset(password, 0, sizeof(password));
+                flag = 1;
+                break;
         }
-
-        if (sendto(sockfd, response, sizeof(response), 0, (struct sockaddr*) &client_addr, sizeof(client_addr)) < 0){
-            die("sendto()");
-        }
+        sendto(sockfd, response, sizeof(response), MSG_CONFIRM, (const struct sockaddr *) &cliaddr, len);
 
     }
 

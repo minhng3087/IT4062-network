@@ -64,8 +64,8 @@ char* delete_space(char *str,char *result) {
   const int len = strlen(str); 
   for(int i = 0; i < len; i++) {
       if (str[0] == '\n') {
-        result[0] = '\n';
-        result[1] = '\0';
+        result[pos] = str[0];
+        result[pos++] = '\0';
         break;
       }else {
         char c = str[i];

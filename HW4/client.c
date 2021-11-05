@@ -11,53 +11,45 @@
 #define MAXCHAR 100
 #define BUFFER 1024
 
-void die(char *s)
-{
-	perror(s);
-	exit(1);
-}
-
 int main(int argc, char **argv) {
     char ip[MAXCHAR];
+    int n;
     int sockfd = 0;
     struct sockaddr_in serv_addr;
-    char input[BUFFER], request[BUFFER], response[BUFFER];
+    char request[BUFFER], response[BUFFER];
     socklen_t addr_size;
     if (argc < 3) {
-        printf("Usage: %s <ip> <port>\n", argv[0]);
-        return -1;
+        printf("Input: %s <ip> <port>\n", argv[0]);
+        return 0;
     }
     
     strcpy(ip, argv[1]);
     int port = atoi(argv[2]);
 
     if ( (sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) {
-        die("socket creation failed");
+        perror("socket creation failed");
+        exit(EXIT_FAILURE);
     }
 
-    memset(&serv_addr, '\0', sizeof(serv_addr));
+    memset(&serv_addr, 0, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_port = htons(port);
     serv_addr.sin_addr.s_addr = inet_addr(ip);
 
+    printf("Username: \n");
     while(1) {
-        fgets(input, BUFFER, stdin);
-        strtok(input, "\n");
-        strcpy(request, input);
-        if (strcmp(request, "\n") == 0) {
-            die("Exit");
+        int flag = 0;
+        flag = scanf("%[^\n]", request);
+        if (flag == 0 )  {
+            perror("Exit");
+            exit(EXIT_FAILURE);
         }
-        //send the message
-		if (sendto(sockfd, request, BUFFER, 0, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
-			die("sendto()");
-		}
-
-        // Try to receive some data, this is a blocking call
-        if (recvfrom(sockfd, response, BUFFER, 0, (struct sockaddr *) &serv_addr, &addr_size) < 0) {
-            die("recvfrom()");
-        }
-
+        getchar();
+        sendto(sockfd, request, BUFFER, MSG_CONFIRM, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
+        n = recvfrom(sockfd, (char*)response, BUFFER, 0, (struct sockaddr *) &serv_addr, &addr_size);
+        response[n] = '\0';
         printf("%s\n", response);
+        
     }
 
     close(sockfd);

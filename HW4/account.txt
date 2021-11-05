@@ -1,2 +1,2 @@
-hust 1mpn32 1
-soict soict123 0
+hust abcd 0
+soict abcd5f 0
