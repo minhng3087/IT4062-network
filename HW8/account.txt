@@ -1,0 +1,2 @@
+hust 1a2b3cd 0
+soict a1b2c3 1
