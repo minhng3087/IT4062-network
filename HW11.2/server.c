@@ -11,12 +11,23 @@
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <fcntl.h>
+#include <assert.h>
 #define MAX 30
 #define N 256
 #define LOCALHOST "127.0.0.1"
 #define BUFFER 1024
 #define TRUE 1
 #define FALSE 0
+
+void set_nonblock(int socket) {
+    int flags;
+    /* Get the file status flags and file access modes */
+    if ( (flags = fcntl (socket, F_GETFL, 0)) < 0)
+    perror("F_GETFL error");
+    /* Set a socket as nonblocking */
+    if (fcntl(socket, F_SETFL, flags | O_ASYNC | O_NONBLOCK) < 0)
+    perror("F_SETFL error");
+}
 
 int main(int argc, char ** argv) {
   int sockfd, rc, on = 1;
@@ -47,14 +58,21 @@ int main(int argc, char ** argv) {
     close(sockfd);
     exit(-1);
   }
+  // ioctl(sockfd, FIOASYNC, (char *)&on);
+  // rc = ioctl(sockfd, FIONBIO, (char * ) & on);
+  // if (rc < 0) {
+  //   perror("ioctl() failed");
+  //   close(sockfd);
+  //   exit(-1);
+  // }
+  // set_nonblock(sockfd);
 
-  rc = ioctl(sockfd, FIONBIO, (char * ) & on);
-  if (rc < 0) {
-    perror("ioctl() failed");
-    close(sockfd);
-    exit(-1);
+  int status = fcntl(sockfd, F_SETFL, fcntl(sockfd, F_GETFL, 0) | O_NONBLOCK);
+
+  if (status == -1){
+    perror("calling fcntl");
+    // handle the error.  By the way, I've never seen fcntl fail in this way
   }
-
   memset( & servaddr, 0, sizeof(servaddr));
   // memset(&cliaddr, 0, sizeof(cliaddr));
 
@@ -75,7 +93,7 @@ int main(int argc, char ** argv) {
   FD_ZERO( & master_set);
   max_sd = sockfd;
   FD_SET(sockfd, & master_set);
-  timeout.tv_sec = 10;
+  timeout.tv_sec = 60;
   timeout.tv_usec = 0;
   do {
     memcpy( & working_set, & master_set, sizeof(master_set));
@@ -105,6 +123,7 @@ int main(int argc, char ** argv) {
               break;
             }
             printf("  New incoming connection - %d\n", new_sd);
+            fcntl(new_sd, F_SETFL, O_NONBLOCK);
             FD_SET(new_sd, & master_set);
             if (new_sd > max_sd)
               max_sd = new_sd;
